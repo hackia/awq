@@ -1,0 +1,12 @@
+[package]
+name = "awq"
+version = "0.0.0"
+edition = "2021"
+authors = ["hackia"]
+license = "AGPL-3"
+readme = "README.md"
+description = "Web utilitities"
+repository = "https://github.com/hackia/awq"
+homepage = "https://github.com/hackia/awq/wiki"
+keywords = ["cli", "hacking", "web", "automation", "security"]
+[dependencies]
