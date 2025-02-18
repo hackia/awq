@@ -13,9 +13,60 @@ use ratatui::{
     Terminal,
 };
 use reqwest::blocking::Client;
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::fmt::{Display, Formatter};
 use std::io::{self, stdout};
+
+#[derive(Debug, Serialize, Deserialize)]
+struct GitHubOwner {
+    login: String,
+    html_url: String,
+    avatar_url: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct GitHubRepo {
+    id: u64,
+    name: String,
+    full_name: String,
+    html_url: String,
+    description: Option<String>,
+    forks_count: u64,
+    stargazers_count: u64,
+    owner: GitHubOwner,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct GitHubSearchResult {
+    total_count: u64,
+    incomplete_results: bool,
+    items: Vec<GitHubRepo>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct GitLabNamespace {
+    id: u64,
+    name: String,
+    path: String,
+    kind: String,
+    full_path: String,
+    web_url: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct GitLabProject {
+    id: u64,
+    name: String,
+    path_with_namespace: String,
+    ssh_url_to_repo: String,
+    http_url_to_repo: String,
+    web_url: String,
+    readme_url: Option<String>,
+    forks_count: u64,
+    star_count: u64,
+    namespace: GitLabNamespace,
+}
 
 #[derive(Clone, Copy, PartialEq)]
 enum SearchEngine {
@@ -57,11 +108,11 @@ impl SearchEngine {
         match self {
             SearchEngine::GitHub => match category {
                 SearchCategory::Repositories => "https://api.github.com/search/repositories?q=a",
-                SearchCategory::Users => "https://api.github.com/search/users?q=a",
+                SearchCategory::Users => "https://api.github.com/search/users?q=",
                 SearchCategory::Topics => "https://api.github.com/search/topics?q=",
             },
             SearchEngine::GitLab => match category {
-                SearchCategory::Repositories => "https://gitlab.com/api/v4/projects?search=a",
+                SearchCategory::Repositories => "https://gitlab.com/api/v4/projects?search=",
                 SearchCategory::Users => "https://gitlab.com/api/v4/users?search=",
                 SearchCategory::Topics => "",
             },
@@ -186,34 +237,99 @@ impl App {
         self.results_to_display.push(format!(
             "repo owner : {owner}\ndate begin : {creat_time}\nlast modif : {time}\nopen issue : {open_issues}\nrepo stars : {stargazers_count}\nrepo forks : {forks}\nrepo watch : {watchers}\nrepo clone : {clone}\nrepo descr : {description}\n\n"));
     }
+
+    fn save_gitlab_repositories(&mut self, item: &Value) {
+        let data = item
+            .get("last_activity_at")
+            .expect("")
+            .as_str()
+            .unwrap_or("No date");
+
+        let created_at = item
+            .get("created_at")
+            .expect("")
+            .as_str()
+            .unwrap_or("No date");
+
+        let time = ago(data).expect("");
+        let creat_time = ago(created_at).expect("");
+        let open_issues = item
+            .get("open_issues")
+            .expect("")
+            .as_number()
+            .expect("")
+            .to_string();
+
+        let description = item
+            .get("description")
+            .expect("")
+            .as_str()
+            .unwrap_or("No description");
+        let watchers = item
+            .get("watchers")
+            .expect("")
+            .as_number()
+            .expect("")
+            .to_string();
+        let owner = item
+            .get("namespace")
+            .expect("")
+            .as_object()
+            .expect("")
+            .get("name")
+            .unwrap()
+            .as_str()
+            .expect("")
+            .to_string();
+
+        let forks = item.get("forks_count").expect("").as_str().unwrap_or("0");
+
+        let clone = item
+            .get("http_url_to_repo")
+            .expect("")
+            .as_str()
+            .unwrap_or("No description");
+
+        let stargazers_count = item
+            .get("star_count")
+            .expect("")
+            .as_number()
+            .expect("")
+            .to_string();
+
+        self.results_to_display.push(format!(
+            "repo owner : {owner}\ndate begin : {creat_time}\nlast modif : {time}\nopen issue : {open_issues}\nrepo stars : {stargazers_count}\nrepo forks : {forks}\nrepo watch : {watchers}\nrepo clone : {clone}\nrepo descr : {description}\n\n"));
+    }
     fn save(&mut self, search: SearchEngine, category: SearchCategory, item: &Value) {
-        match category {
-            SearchCategory::Repositories => match search {
-                SearchEngine::GitHub => self.save_github_repositories(item),
-                SearchEngine::GitLab => {}
-                SearchEngine::Bitbucket => {}
-                SearchEngine::Wikipedia => {}
+        match search {
+            SearchEngine::GitHub => match category {
+                SearchCategory::Repositories => self.save_github_repositories(item),
+                SearchCategory::Users => {}
+                SearchCategory::Topics => {}
             },
-            SearchCategory::Users => match search {
-                SearchEngine::GitHub => {}
-                SearchEngine::GitLab => {}
-                SearchEngine::Bitbucket => {}
-                SearchEngine::Wikipedia => {}
+            SearchEngine::GitLab => match category {
+                SearchCategory::Repositories => self.save_gitlab_repositories(item),
+                SearchCategory::Users => {}
+                SearchCategory::Topics => {}
             },
-            SearchCategory::Topics => match search {
-                SearchEngine::GitHub => {}
-                SearchEngine::GitLab => {}
-                SearchEngine::Bitbucket => {}
-                SearchEngine::Wikipedia => {}
-            },
+            SearchEngine::Bitbucket => {}
+            SearchEngine::Wikipedia => {}
         }
     }
 
     fn search(&mut self) {
+        self.results_to_display.clear();
         let engine = self.engine[self.current_engine];
         let category = self.category.get(self.selected_category).expect("").clone();
         let client = Client::new();
         let url = format!("{}{}", engine.base_url(category), self.input);
+
+        match engine {
+            SearchEngine::GitHub => {}
+            SearchEngine::GitLab => {}
+            SearchEngine::Bitbucket => {}
+            SearchEngine::Wikipedia => {}
+        }
 
         if let Ok(resp) = client
             .get(&url)
@@ -221,9 +337,16 @@ impl App {
             .header("User-Agent", "awq")
             .send()
         {
-            self.results_to_display.clear();
             if let Ok(json) = resp.json::<Value>() {
                 if let Some(items) = json["items"].as_array() {
+                    self.results_to_display.push(format!(
+                        "resp match : {}",
+                        json["total_count"].as_number().expect("").to_string()
+                    ));
+                    for item in items {
+                        self.save(engine, category, &item);
+                    }
+                } else if let Some(items) = json.as_array() {
                     for item in items {
                         self.save(engine, category, &item);
                     }
@@ -343,9 +466,7 @@ fn main() -> io::Result<()> {
                 KeyCode::Backspace => {
                     app.input.pop();
                 }
-                _ => {
-                    terminal.clear()?;
-                }
+                _ => {}
             }
         }
     }
