@@ -381,10 +381,8 @@ fn main() -> io::Result<()> {
     enable_raw_mode()?;
     let mut terminal = Terminal::new(CrosstermBackend::new(stdout()))?;
     let mut app = App::new();
-
+    terminal.clear()?;
     loop {
-        terminal.clear()?;
-
         terminal.draw(|f| {
             let chunks = Layout::default()
                 .direction(Direction::Vertical)
@@ -470,6 +468,7 @@ fn main() -> io::Result<()> {
             }
         }
     }
+    terminal.clear()?;
     disable_raw_mode()?;
     Ok(())
 }
