@@ -1,6 +1,18 @@
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 
+pub struct Commit {
+    id: AwqId,
+}
+
+impl Commit {
+    pub fn new(id: AwqId) -> Self {
+        Self { id }
+    }
+}
+pub struct Awq {
+    commit: Commit,
+}
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AwqId {
     pub previous: Option<String>,
@@ -15,7 +27,6 @@ impl AwqId {
     /// Calcule le hash de l'ensemble des métadonnées
     pub fn compute_hash(&self, source_files: &[(&str, &str)]) -> String {
         let mut hasher = Sha256::new();
-
         if let Some(prev) = &self.previous {
             hasher.update(prev.as_bytes());
         }
