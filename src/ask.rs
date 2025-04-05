@@ -2,7 +2,7 @@ use inquire::Editor;
 
 pub fn ask(question: &str) -> Result<String, std::io::Error> {
     Editor::new(question)
-        .with_editor_command(&"vim".as_ref())
+        .with_editor_command("vim".as_ref())
         .prompt()
         .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))
 }
