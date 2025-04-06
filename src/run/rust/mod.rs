@@ -19,11 +19,10 @@ pub const RUST_FULL_LINT: &str = "clippy -- --warn clippy::all \
                                     --deny warnings \
                                     --deny clippy::complexity";
 
-pub const RUN_RUST: [&str; 6] = [
-    RUST_BUILD,
-    RUST_FORMAT,
-    RUST_DEPS_OUTDATED,
-    RUST_FULL_LINT,
-    RUST_AUDIT,
-    RUST_TEST,
+pub const RUN_RUST: [(&str, &str, &str); 5] = [
+    ("build", "compiling source code", RUST_BUILD),
+    ("fmt", "checking source code format", RUST_FORMAT),
+    ("lint", "checking source code", RUST_FULL_LINT),
+    ("audit", "auditing source code ", RUST_AUDIT),
+    ("test", "testing source code ", RUST_TEST),
 ];

@@ -12,7 +12,6 @@ use std::fs;
 use std::fs::create_dir_all;
 use std::io::ErrorKind;
 use std::path::{Path, PathBuf};
-use std::thread::sleep;
 use std::time::Duration;
 use std::{
     collections::HashMap,
@@ -46,16 +45,13 @@ impl Security {
         }
 
         if path.is_dir() {
-            return Ok(()); // silently ignore directories
+            return Ok(());
         }
 
         if path.starts_with("..") || path.is_absolute() {
             return Err(anyhow::anyhow!("Invalid path"));
         }
 
-        if path.extension().is_none() && path.to_str().expect("msg").ends_with("LICENSE") {
-            return Ok(());
-        }
         if path.extension().is_none() || path.file_name().is_none() {
             return Err(anyhow::anyhow!("Missing name or extension"));
         }
@@ -132,14 +128,13 @@ pub struct DiffForest {
     pub to_test: DynTree<PathBuf>,
 }
 
+#[must_use]
 pub fn get_sure_files() -> Vec<PathBuf> {
-    WalkBuilder::new(".awq/tree")
-        .standard_filters(true)
-        .build()
-        .filter_map(|entry| entry.ok())
-        .filter(|entry| entry.path().is_file())
-        .map(|entry| entry.path().to_path_buf())
-        .collect()
+    if let Ok(sure) = scan(".awq/tree") {
+        sure
+    } else {
+        Vec::new()
+    }
 }
 
 pub fn scan(dir: &str) -> Result<Vec<PathBuf>, Error> {
@@ -160,7 +155,7 @@ pub fn scan(dir: &str) -> Result<Vec<PathBuf>, Error> {
 }
 
 impl DiffResult {
-    pub fn stats(&self) -> std::io::Result<()> {
+    pub fn stats(&self) -> Result<(), Error> {
         let line_diffs: HashMap<PathBuf, Vec<String>> = Self::diff_by_lines(".awq/tree", ".")?;
 
         let mut builder: Builder = Builder::default();
@@ -184,15 +179,12 @@ impl DiffResult {
                 removed.to_string(),
             ]);
         }
-
-        // Dernière ligne : total
         let table: Table = builder.build();
-        println!("{}", table);
-
+        println!("{table}");
         Ok(())
     }
 
-    pub fn print_summary_diff(&self) -> std::io::Result<()> {
+    pub fn print_summary_diff(&self) -> Result<()> {
         let line_diffs = Self::diff_by_lines(".awq/tree", ".")?;
         let mut total_added = 0;
         let mut total_removed = 0;
@@ -214,21 +206,15 @@ impl DiffResult {
             total_added += added;
             total_removed += removed;
 
-            println!("* {:<40} [+{} -{}]", file.display(), added, removed);
+            println!("* {:<40} [+{added} -{removed}]", file.display());
         }
 
         println!(
-            "\nTotal files: {} | \x1b[32m+{} lines\x1b[0m | \x1b[31m-{} lines\x1b[0m",
-            total_files, total_added, total_removed
+            "\nTotal files: {total_files} | \x1b[32m+{total_added} lines\x1b[0m | \x1b[31m-{total_removed} lines\x1b[0m"
         );
         Ok(())
     }
-
-    /// Compare deux dossiers ligne par ligne et retourne les différences
-    pub fn diff_by_lines(
-        dir_a: &str,
-        dir_b: &str,
-    ) -> std::io::Result<HashMap<PathBuf, Vec<String>>> {
+    pub fn diff_by_lines(dir_a: &str, dir_b: &str) -> Result<HashMap<PathBuf, Vec<String>>> {
         let mut diffs: HashMap<PathBuf, Vec<String>> = HashMap::new();
 
         for entry in WalkBuilder::new(dir_b)
@@ -261,16 +247,14 @@ impl DiffResult {
 
             let mut file_diff: Vec<String> = Vec::new();
 
-            // Détection des ajouts ou modifications ligne par ligne
             for (i, line_b) in b_lines.iter().enumerate() {
                 if i >= a_lines.len() {
                     file_diff.push(format!("+ {}", line_b));
                 } else if line_b != &a_lines[i] {
-                    file_diff.push(format!("~ {}", line_b)); // modifié
+                    file_diff.push(format!("~ {}", line_b));
                 }
             }
 
-            // Lignes supprimées (présentes avant, absentes maintenant)
             if b_lines.len() < a_lines.len() {
                 for line in &a_lines[b_lines.len()..] {
                     file_diff.push(format!("- {}", line));
@@ -290,13 +274,12 @@ pub fn copy_with_bar(source: &str, dest: &str) -> Result<()> {
     let dest_path = Path::new(dest);
 
     if source_path.exists().eq(&false) {
-        return Err(anyhow::Error::new(std::io::Error::new(
+        return Err(Error::new(std::io::Error::new(
             ErrorKind::NotFound,
             "source dir not found",
         )));
     }
 
-    // Liste filtrée avec ignore support
     if let Ok(valid_entries) = scan(".") {
         let total_bytes: u64 = valid_entries
             .iter()
@@ -308,26 +291,24 @@ pub fn copy_with_bar(source: &str, dest: &str) -> Result<()> {
         pb.set_style(
             ProgressStyle::default_bar()
                 .template("{spinner:.green} [{elapsed_precise}] [{bar:40.cyan/blue}] {bytes}/{total_bytes} ({eta})")
-                .unwrap()
-                .progress_chars("#>-"),
+                ?.progress_chars("#>-"),
         );
         for path in &valid_entries {
             let rel = path.strip_prefix(source_path)?;
             let target = dest_path.join(rel);
 
             if path.is_dir() {
-                fs::create_dir_all(&target)?;
+                create_dir_all(&target)?;
             } else if path.is_file() {
                 if let Some(parent) = target.parent() {
-                    fs::create_dir_all(parent)?;
+                    create_dir_all(parent)?;
                 }
                 fs::copy(path, &target)?;
                 let size = fs::metadata(path)?.len();
                 pb.inc(size);
-                sleep(Duration::from_millis(250));
             }
         }
-        pb.finish_with_message("Copie terminée.");
+        pb.finish_with_message("Copied");
         return Ok(());
     }
     Err(anyhow::anyhow!(ErrorKind::InvalidInput))
@@ -335,7 +316,7 @@ pub fn copy_with_bar(source: &str, dest: &str) -> Result<()> {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AwqConfig {
-    pub language: String,
+    pub language: Vec<String>,
 }
 
 pub fn config() -> Result<AwqConfig, Box<dyn std::error::Error>> {
@@ -344,7 +325,7 @@ pub fn config() -> Result<AwqConfig, Box<dyn std::error::Error>> {
     Ok(config)
 }
 impl AwqCommit {
-    pub fn new() -> Result<Self, anyhow::Error> {
+    pub fn new() -> Result<Self, Error> {
         let author: String = var("USER").unwrap_or_else(|_| "unknown".to_string());
         let timestamp: String = Utc::now().to_rfc3339();
         let version: u8 = 1;
@@ -361,14 +342,14 @@ impl AwqCommit {
 
         if let Ok(tree) = scan(".") {
             for t in &tree {
-                let relative_path = t.strip_prefix(".")?; // ex: src/main.rs
+                let relative_path = t.strip_prefix(".")?;
                 let destination = Path::new(".awq").join("src").join(relative_path);
 
                 if t.is_dir() {
-                    fs::create_dir_all(&destination)?;
+                    create_dir_all(&destination)?;
                 } else if t.is_file() {
                     if let Some(parent) = destination.parent() {
-                        fs::create_dir_all(parent)?;
+                        create_dir_all(parent)?;
                     }
                     if let Err(e) = Security::check_file(t) {
                         return Err(anyhow::anyhow!(e));
@@ -422,7 +403,6 @@ impl AwqCommit {
             "nebula",
             "docs: Improve documentation (cloud of information).",
         );
-        descriptions.insert("cosmic ray", "docs: Add enlightening information.");
         descriptions.insert(
             "astrophysics",
             "docs: High-level documentation about physics.",
@@ -457,10 +437,6 @@ impl AwqCommit {
 
         descriptions.insert("light speed", "perf: Significant speed improvement.");
         descriptions.insert(
-            "solar flare",
-            "perf: Energy optimization (burst of energy).",
-        );
-        descriptions.insert(
             "pulsar",
             "perf: Performance improvement with regular emissions.",
         );
@@ -493,7 +469,6 @@ impl AwqCommit {
         descriptions.insert("solar storm", "chore: Other potentially disruptive change.");
         descriptions.insert("lunar transit", "chore: Other transient change.");
         descriptions.insert("perihelion", "chore: Other change at the closest point.");
-        descriptions.insert("aphelion", "chore: Other change at the farthest point.");
         descriptions.insert("void", "chore: Other change (removal).");
         descriptions.insert("gravitation", "chore: Other fundamental change.");
         descriptions.insert("cosmic ray", "chore: Other change (minor impact).");
@@ -581,15 +556,14 @@ impl AwqCommit {
         }
     }
 
-    pub fn save(&mut self) -> Result<(), anyhow::Error> {
+    pub fn save(&mut self) -> Result<(), Error> {
         Checker::new(self.config.clone()).check()?;
 
         let diff: HashMap<PathBuf, Vec<String>> =
             DiffResult::diff_by_lines(".awq/tree", ".awq/src")?;
         if Confirm::new("Show more details?")
             .with_default(false)
-            .prompt()
-            .unwrap()
+            .prompt()?
             .eq(&true)
         {
             for (file, changes) in &diff {
@@ -611,8 +585,7 @@ impl AwqCommit {
         }
         if Confirm::new("Do you confirm want to commit these changes?")
             .with_default(false)
-            .prompt()
-            .unwrap()
+            .prompt()?
             .eq(&false)
         {
             println!("Commit aborted.");
@@ -676,7 +649,6 @@ impl AwqCommit {
         let hasher = Sha512::new_with_prefix(data.as_bytes()); // Convert to &[u8]
         hex::encode(hasher.finalize_fixed())
     }
-
     fn get_hash(&self) -> String {
         self.id.hash.clone().unwrap_or_default()
     }
