@@ -10,12 +10,18 @@ pub const RUST_FORMAT: &str = "fmt -- --check";
 /// Vérifie les dépendances obsolètes
 pub const RUST_DEPS_OUTDATED: &str = "outdated";
 
-/// Vérifie les dépendances inutilisées
-pub const RUST_DEPS_UDEPS: &str = "udeps";
-
 /// Combine plusieurs lints en une passe stricte
 pub const RUST_FULL_LINT: &str = "clippy -- --warn clippy::all \
-                                            --warn clippy::nursery \
-                                            --deny warnings \
-                                            --deny clippy::complexity";
-pub const RUN_RUST: [&str; 4] = [RUST_FORMAT, RUST_FULL_LINT, RUST_AUDIT, RUST_TEST];
+                                    --warn clippy::nursery \
+                                    --warn clippy::pedantic \
+                                    --warn clippy::suspicious \
+                                    --deny warnings \
+                                    --deny clippy::complexity";
+
+pub const RUN_RUST: [&str; 5] = [
+    RUST_FORMAT,
+    RUST_DEPS_OUTDATED,
+    RUST_FULL_LINT,
+    RUST_AUDIT,
+    RUST_TEST,
+];

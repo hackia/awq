@@ -53,6 +53,9 @@ impl Security {
             return Err(anyhow::anyhow!("Invalid path"));
         }
 
+        if path.extension().is_none() && path.to_str().expect("msg").ends_with("LICENSE") {
+            return Ok(());
+        }
         if path.extension().is_none() || path.file_name().is_none() {
             return Err(anyhow::anyhow!("Missing name or extension"));
         }
@@ -351,7 +354,11 @@ impl AwqCommit {
         create_dir_all(".awq/logs")?;
         create_dir_all(".awq/commits")?;
         create_dir_all(".awq/tree")?;
+        if Path::new(".awq/src").exists() {
+            fs::remove_dir_all(".awq/src")?;
+        }
         create_dir_all(".awq/src")?;
+
         if let Ok(tree) = scan(".") {
             for t in &tree {
                 let relative_path = t.strip_prefix(".")?; // ex: src/main.rs
