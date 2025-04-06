@@ -11,6 +11,7 @@ use std::path::Path;
 use std::process::Command;
 
 pub mod c;
+pub mod go;
 pub mod cmake;
 pub mod nodejs;
 pub mod rust;
