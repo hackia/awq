@@ -130,11 +130,7 @@ pub struct DiffForest {
 
 #[must_use]
 pub fn get_sure_files() -> Vec<PathBuf> {
-    if let Ok(sure) = scan(".awq/tree") {
-        sure
-    } else {
-        Vec::new()
-    }
+    scan(".awq/tree").unwrap_or_default()
 }
 
 pub fn scan(dir: &str) -> Result<Vec<PathBuf>, Error> {
@@ -151,7 +147,7 @@ pub fn scan(dir: &str) -> Result<Vec<PathBuf>, Error> {
     for entry in walker.flatten() {
         x.push(entry.path().to_path_buf());
     }
-    Ok(x.to_vec())
+    Ok(x.clone())
 }
 
 impl DiffResult {
@@ -223,44 +219,35 @@ impl DiffResult {
             .filter(|e| e.clone().expect("msg").path().is_file())
         {
             let path_b = entry.expect("msg");
-            let rel_path = path_b
-                .path()
-                .strip_prefix(dir_b)
-                .unwrap_or_else(|_| path_b.path());
+            let rel_path = path_b.path().strip_prefix(dir_b)?;
             let path_a = Path::new(dir_a).join(rel_path);
-
             let b_lines = fs::read_to_string(path_b.path())
                 .unwrap_or_default()
                 .lines()
                 .map(|s| s.to_string())
                 .collect::<Vec<_>>();
-
             let a_lines = if path_a.exists() {
                 fs::read_to_string(path_a)
                     .unwrap_or_default()
                     .lines()
-                    .map(|s| s.to_string())
+                    .map(String::from)
                     .collect::<Vec<_>>()
             } else {
                 vec![]
             };
-
             let mut file_diff: Vec<String> = Vec::new();
-
             for (i, line_b) in b_lines.iter().enumerate() {
                 if i >= a_lines.len() {
-                    file_diff.push(format!("+ {}", line_b));
+                    file_diff.push(format!("+ {line_b}"));
                 } else if line_b != &a_lines[i] {
-                    file_diff.push(format!("~ {}", line_b));
+                    file_diff.push(format!("~ {line_b}"));
                 }
             }
-
             if b_lines.len() < a_lines.len() {
                 for line in &a_lines[b_lines.len()..] {
-                    file_diff.push(format!("- {}", line));
+                    file_diff.push(format!("- {line}"));
                 }
             }
-
             if !file_diff.is_empty() {
                 diffs.insert(rel_path.to_path_buf(), file_diff);
             }
@@ -352,6 +339,7 @@ impl AwqCommit {
                         create_dir_all(parent)?;
                     }
                     if let Err(e) = Security::check_file(t) {
+                        eprintln!(">> invalid file : {}", t.display());
                         return Err(anyhow::anyhow!(e));
                     }
                     fs::copy(t, &destination)?;
@@ -375,11 +363,10 @@ impl AwqCommit {
                 commit_type: String::new(),
             });
         }
-        Err(anyhow::anyhow!("missing config file"))
+        Err(anyhow::anyhow!(">> missing the awq.yml config file"))
     }
     fn get_awq_commit_descriptions(&self) -> HashMap<&'static str, &'static str> {
         let mut descriptions: HashMap<&str, &str> = HashMap::new();
-
         descriptions.insert("terraform", "feat: Add a new feature (planet management).");
         descriptions.insert(
             "first contact",
@@ -525,13 +512,11 @@ impl AwqCommit {
             "dwarf planet",
             "chore: Other change that looks like a feature but is smaller.",
         );
-
         descriptions.insert(
             "aphelion",
             "revert: Revert a previous commit (moving away).",
         );
         descriptions.insert("regression", "revert: Restore to an earlier version.");
-
         descriptions
     }
 
@@ -581,14 +566,14 @@ impl AwqCommit {
                 }
             }
         } else {
-            println!("No details shown.");
+            println!(">> No details shown.");
         }
         if Confirm::new("Do you confirm want to commit these changes?")
             .with_default(false)
             .prompt()?
             .eq(&false)
         {
-            println!("Commit aborted.");
+            println!(">> Commit aborted.");
             return Ok(());
         }
         self.set_commit_type();
