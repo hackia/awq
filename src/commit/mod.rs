@@ -427,7 +427,6 @@ impl AwqCommit {
             "pulsar",
             "perf: Performance improvement with regular emissions.",
         );
-
         descriptions.insert(
             "telescope",
             "test: Add tests (observation and verification).",
@@ -441,7 +440,6 @@ impl AwqCommit {
             "space station",
             "build: Configuration of the build environment.",
         );
-
         descriptions.insert(
             "orbit",
             "ci: Configuration of the continuous integration cycle.",
@@ -450,7 +448,6 @@ impl AwqCommit {
             "galaxy cluster",
             "ci: Configuration of a set of CI systems.",
         );
-
         descriptions.insert("comet", "chore: Other change (cleanup).");
         descriptions.insert("meteor", "chore: Other minor change.");
         descriptions.insert("solar storm", "chore: Other potentially disruptive change.");
@@ -540,7 +537,6 @@ impl AwqCommit {
             break;
         }
     }
-
     pub fn save(&mut self) -> Result<(), Error> {
         Checker::new(self.config.clone()).check()?;
 
