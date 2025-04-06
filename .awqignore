@@ -3,3 +3,4 @@
 .hg
 target
 .vscode
+Cargo.lock
