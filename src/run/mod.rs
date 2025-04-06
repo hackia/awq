@@ -1,6 +1,7 @@
 use crate::commit::AwqConfig;
 use crate::run::c::RUN_C;
 use crate::run::cmake::RUN_CMAKE;
+use crate::run::go::RUN_GO;
 use crate::run::nodejs::RUN_NPM;
 use crate::run::rust::RUN_RUST;
 use anyhow::{anyhow, Error};
@@ -11,8 +12,8 @@ use std::path::Path;
 use std::process::Command;
 
 pub mod c;
-pub mod go;
 pub mod cmake;
+pub mod go;
 pub mod nodejs;
 pub mod rust;
 pub struct Checker {
@@ -79,6 +80,7 @@ impl Checker {
                 "js" => self.run(lang.as_str(), RUN_NPM.to_vec())?,
                 "c" => self.run(lang.as_str(), RUN_C.to_vec())?,
                 "cmake" => self.run(lang.as_str(), RUN_CMAKE.to_vec())?,
+                "go" => self.run(lang.as_str(), RUN_GO.to_vec())?,
                 _ => {
                     eprintln!(">> unknown language : {lang}")
                 }
