@@ -3,8 +3,7 @@ use crate::run::c::RUN_C;
 use crate::run::cmake::RUN_CMAKE;
 use crate::run::nodejs::RUN_NPM;
 use crate::run::rust::RUN_RUST;
-use anyhow::Error;
-use is_executable::IsExecutable;
+use anyhow::{anyhow, Error};
 use std::env::current_dir;
 use std::fs;
 use std::fs::File;
@@ -38,8 +37,8 @@ impl Checker {
         println!(">> checking {lang} code");
         for task in &tasks {
             println!(">> {}", task.1.to_string());
-            if Command::new("cargo")
-                .args(task.2.split_whitespace())
+            if Command::new("sh")
+                .args(&["-c", task.2])
                 .current_dir(".awq/src")
                 .stdout(File::create(
                     format!(
@@ -60,13 +59,10 @@ impl Checker {
                 .spawn()?
                 .wait()?
                 .success()
-                .eq(&false)
             {
-                if Path::new("/usr/bin/ranger").is_executable() {
-                    let _ = Command::new("ranger").current_dir(".").spawn()?.wait()?;
-                }
-                return Err(anyhow::anyhow!(">> test failed"));
+                continue;
             }
+            return Err(anyhow!(format!(">> {} failure", task.1)));
         }
         println!(">> {lang} code validated");
         Ok(())

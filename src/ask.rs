@@ -7,7 +7,6 @@ pub fn ask(question: &str) -> Result<String, Error> {
         .prompt()
         .map_err(|e| Error::new(std::io::ErrorKind::Other, e))
 }
-
 pub fn ask_commit_message() -> Result<String, Error> {
     ask("Enter commit message")
 }

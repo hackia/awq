@@ -1,18 +1,9 @@
-/// Compile le projet TypeScript ou JavaScript
-pub const NPM_BUILD: &str = "run build";
+pub const NPM_BUILD: &str = "npm run build";
+pub const NPM_FORMAT: &str = "npm run fmt";
+pub const NPM_LINT: &str = "npm run lint";
 
-/// Vérifie la mise en forme du code (sans modifier)
-pub const NPM_FORMAT: &str = "run fmt";
-
-/// Lint strict du code avec ESLint
-pub const NPM_LINT: &str = "run lint";
-
-/// Audit de sécurité des dépendances
-pub const NPM_AUDIT: &str = "audit";
-
-/// Exécute tous les tests
-pub const NPM_TEST: &str = "test";
-
+pub const NPM_AUDIT: &str = "npm audit";
+pub const NPM_TEST: &str = "npm test";
 pub const RUN_NPM: [(&str, &str, &str); 5] = [
     ("build", "compiling project", NPM_BUILD),
     ("fmt", "checking code format", NPM_FORMAT),
