@@ -6,6 +6,7 @@ pub const RUST_AUDIT: &str = "audit";
 
 /// Vérifie la mise en forme du code (sans modifier)
 pub const RUST_FORMAT: &str = "fmt -- --check";
+pub const RUST_BUILD: &str = "build";
 
 /// Vérifie les dépendances obsolètes
 pub const RUST_DEPS_OUTDATED: &str = "outdated";
@@ -18,7 +19,8 @@ pub const RUST_FULL_LINT: &str = "clippy -- --warn clippy::all \
                                     --deny warnings \
                                     --deny clippy::complexity";
 
-pub const RUN_RUST: [&str; 5] = [
+pub const RUN_RUST: [&str; 6] = [
+    RUST_BUILD,
     RUST_FORMAT,
     RUST_DEPS_OUTDATED,
     RUST_FULL_LINT,
