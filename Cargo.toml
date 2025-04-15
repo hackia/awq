@@ -23,7 +23,6 @@ inquire = { version = "0.7.5", features = [
     "date",
     "editor",
 ] }
-is_executable = "1.0.4"
 num_cpus = "1.16.0"
 orx-tree = "1.3.0"
 serde = { version = "1.0.219", features = ["derive"] }
