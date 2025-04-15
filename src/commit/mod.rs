@@ -4,13 +4,81 @@ use anyhow::{anyhow, Error, Result};
 use ignore::WalkBuilder;
 use inquire::{Confirm, Select};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use std::fs::create_dir_all;
 use std::path::PathBuf;
 use std::process::Command;
 
-pub const API_CHANGE: &str = include_str!("/usr/share/awq/templates/api/changes.txt");
+pub const TEMPLATE: &str = include_str!("/usr/share/awq/templates/commit.txt");
 
+pub const SCOPES: [&str; 67] = [
+    "terraform",
+    "first contact",
+    "interstellar",
+    "intergalactic",
+    "exoplanet",
+    "stellar nursery",
+    "moon landing",
+    "dark hole",
+    "rogue planet",
+    "asteroid",
+    "nebula",
+    "astrophysics",
+    "cosmology",
+    "eclipse",
+    "planetary nebula",
+    "white dwarf",
+    "red giant",
+    "neutron star",
+    "gravity",
+    "light speed",
+    "pulsar",
+    "telescope",
+    "satellite",
+    "probe",
+    "spacecraft",
+    "rocket",
+    "space station",
+    "orbit",
+    "galaxy cluster",
+    "comet",
+    "meteor",
+    "solar storm",
+    "lunar transit",
+    "perihelion",
+    "void",
+    "gravitation",
+    "cosmic ray",
+    "quantum",
+    "hawking",
+    "event horizon",
+    "redshift",
+    "quasar",
+    "black hole",
+    "dark matter",
+    "dark energy",
+    "dark star",
+    "Kuiper belt",
+    "Oort cloud",
+    "Milky Way",
+    "Andromeda",
+    "supercluster",
+    "multiverse",
+    "antimatter",
+    "dark flow",
+    "cosmic microwave background",
+    "gravitational wave",
+    "magnetar",
+    "brown dwarf",
+    "blue giant",
+    "cepheid variable",
+    "singularity",
+    "solar",
+    "solar flare",
+    "dwarf star",
+    "dwarf planet",
+    "aphelion",
+    "regression",
+];
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AwqCommit {
     commit_type: String,
@@ -49,172 +117,15 @@ impl AwqCommit {
             commit_type: String::new(),
         })
     }
-    fn get_awq_commit_descriptions(&self) -> HashMap<&'static str, &'static str> {
-        let mut descriptions: HashMap<&str, &str> = HashMap::new();
-        descriptions.insert("terraform", "feat: Add a new feature (planet management).");
-        descriptions.insert(
-            "first contact",
-            "feat: Add a new feature (external interaction).",
-        );
-        descriptions.insert("interstellar", "feat: Add a large-scale feature.");
-        descriptions.insert("intergalactic", "feat: Add a very ambitious feature.");
-        descriptions.insert(
-            "exoplanet",
-            "feat: Add a feature external to the main system.",
-        );
-        descriptions.insert("stellar nursery", "feat: Add a feature under development.");
-        descriptions.insert("moon landing", "feat: Add a major feature (exploit).");
-        descriptions.insert("big bang", "feat: Major change introducing a new feature.");
-
-        descriptions.insert("dark hole", "fix: Fix a bug (data loss).");
-        descriptions.insert("rogue planet", "fix: Fix an unexpected behavior.");
-        descriptions.insert("asteroid", "fix: Fix a small issue.");
-
-        descriptions.insert(
-            "nebula",
-            "docs: Improve documentation (cloud of information).",
-        );
-        descriptions.insert(
-            "astrophysics",
-            "docs: High-level documentation about physics.",
-        );
-        descriptions.insert(
-            "cosmology",
-            "docs: High-level documentation about architecture.",
-        );
-
-        descriptions.insert("eclipse", "style: Change in appearance (visual theme).");
-        descriptions.insert(
-            "planetary nebula",
-            "style: Visual organization of the code.",
-        );
-
-        descriptions.insert(
-            "white dwarf",
-            "refactor: Restructuring of a module (evolution).",
-        );
-        descriptions.insert(
-            "red giant",
-            "refactor: Significant refactoring of a part of the code.",
-        );
-        descriptions.insert(
-            "neutron star",
-            "refactor: Deep transformation of a component.",
-        );
-        descriptions.insert(
-            "gravity",
-            "refactor: Fundamental reorganization of the code.",
-        );
-
-        descriptions.insert("light speed", "perf: Significant speed improvement.");
-        descriptions.insert(
-            "pulsar",
-            "perf: Performance improvement with regular emissions.",
-        );
-        descriptions.insert(
-            "telescope",
-            "test: Add tests (observation and verification).",
-        );
-        descriptions.insert("satellite", "test: Add monitoring tests.");
-        descriptions.insert("probe", "test: Add exploratory tests.");
-
-        descriptions.insert("spacecraft", "build: Update build infrastructure.");
-        descriptions.insert("rocket", "build: Change related to the launch system.");
-        descriptions.insert(
-            "space station",
-            "build: Configuration of the build environment.",
-        );
-        descriptions.insert(
-            "orbit",
-            "ci: Configuration of the continuous integration cycle.",
-        );
-        descriptions.insert(
-            "galaxy cluster",
-            "ci: Configuration of a set of CI systems.",
-        );
-        descriptions.insert("comet", "chore: Other change (cleanup).");
-        descriptions.insert("meteor", "chore: Other minor change.");
-        descriptions.insert("solar storm", "chore: Other potentially disruptive change.");
-        descriptions.insert("lunar transit", "chore: Other transient change.");
-        descriptions.insert("perihelion", "chore: Other change at the closest point.");
-        descriptions.insert("void", "chore: Other change (removal).");
-        descriptions.insert("gravitation", "chore: Other fundamental change.");
-        descriptions.insert("cosmic ray", "chore: Other change (minor impact).");
-        descriptions.insert("quantum", "chore: Other change (small scale).");
-        descriptions.insert("hawking", "chore: Other change (theoretical idea).");
-        descriptions.insert("event horizon", "chore: Other change (limit).");
-        descriptions.insert("redshift", "chore: Other change (shift).");
-        descriptions.insert("quasar", "chore: Other change (very luminous).");
-        descriptions.insert("black hole", "chore: Other change (permanent removal?).");
-        descriptions.insert(
-            "dark matter",
-            "chore: Other change invisible but with effect.",
-        );
-        descriptions.insert(
-            "dark energy",
-            "chore: Other change that accelerates something.",
-        );
-        descriptions.insert("dark star", "chore: Other invisible change.");
-        descriptions.insert("Kuiper belt", "chore: Other change in a peripheral area.");
-        descriptions.insert("Oort cloud", "chore: Other very distant change.");
-        descriptions.insert("Milky Way", "chore: Other project-wide change.");
-        descriptions.insert(
-            "Andromeda",
-            "chore: Other change related to an external project.",
-        );
-        descriptions.insert("supercluster", "chore: Other very large-scale change.");
-        descriptions.insert("universe", "chore: Other fundamental change.");
-        descriptions.insert(
-            "multiverse",
-            "chore: Other change affecting multiple aspects.",
-        );
-        descriptions.insert("antimatter", "chore: Other potentially destructive change.");
-        descriptions.insert("dark flow", "chore: Other change with a hidden direction.");
-        descriptions.insert(
-            "cosmic microwave background",
-            "chore: Other fundamental change (remnant).",
-        );
-        descriptions.insert(
-            "gravitational wave",
-            "chore: Other change with a perturbation.",
-        );
-        descriptions.insert("magnetar", "chore: Other change with a strong influence.");
-        descriptions.insert("brown dwarf", "chore: Other change (almost a feature).");
-        descriptions.insert("blue giant", "chore: Other significant change.");
-        descriptions.insert(
-            "cepheid variable",
-            "chore: Other change with periodic variation.",
-        );
-        descriptions.insert("singularity", "chore: Other unique and specific change.");
-        descriptions.insert("solar", "chore: Other change related to the main system.");
-        descriptions.insert("solar flare", "chore: Other sudden and intense change.");
-        descriptions.insert("dwarf star", "chore: Other small change.");
-        descriptions.insert(
-            "dwarf planet",
-            "chore: Other change that looks like a feature but is smaller.",
-        );
-        descriptions.insert(
-            "aphelion",
-            "revert: Revert a previous commit (moving away).",
-        );
-        descriptions.insert("regression", "revert: Restore to an earlier version.");
-        descriptions
-    }
 
     fn set_commit_type(&mut self) {
-        let descriptions: HashMap<&str, &str> = self.get_awq_commit_descriptions();
-
-        let mut ty: Vec<String> = Vec::new();
-        descriptions
-            .iter()
-            .for_each(|(k, v)| ty.push(format!("{k}: ({v})")));
         loop {
-            let ct = Select::new("Select a commit type:", ty.to_vec())
+            let ct = Select::new("Select a commit scope:", SCOPES.to_vec())
                 .prompt()
                 .unwrap()
                 .to_string();
             if ct.is_empty() {
-                println!("Please select a commit type.");
+                println!("Please select a commit scope.");
                 continue;
             }
             self.commit_type = ct;
@@ -256,11 +167,11 @@ impl AwqCommit {
         self.set_why(asked("Why are you making this commit?")?);
         self.set_message(asked("What is the message of this commit?")?);
 
-        let commit = API_CHANGE
-            .replace("%type%", self.commit_type.as_str())
+        let commit = TEMPLATE
+            .replace("%scope%", self.commit_type.as_str())
             .replace("%summary%", self.summary.as_str())
-            .replace("%why%", self.why.as_str())
-            .replace("%explain%", self.message.as_str());
+            .replace("%message%", self.message.as_str())
+            .replace("%why%", self.why.as_str());
         if Command::new("git")
             .arg("commit")
             .arg("-m")
