@@ -1,5 +1,3 @@
 %scope%  %summary%
 
-%message%
-
 %why%

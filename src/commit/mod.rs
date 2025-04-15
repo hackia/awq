@@ -165,12 +165,10 @@ impl AwqCommit {
         self.set_commit_type();
         self.set_summary(asked("What is the summary of this commit?")?);
         self.set_why(asked("Why are you making this commit?")?);
-        self.set_message(asked("What is the message of this commit?")?);
 
         let commit = TEMPLATE
             .replace("%scope%", self.commit_type.as_str())
             .replace("%summary%", self.summary.as_str())
-            .replace("%message%", self.message.as_str())
             .replace("%why%", self.why.as_str());
         if Command::new("git")
             .arg("commit")
@@ -185,9 +183,6 @@ impl AwqCommit {
         } else {
             Err(anyhow!("Failed to commit changes."))
         }
-    }
-    fn set_message(&mut self, message: String) {
-        self.message = message;
     }
     fn set_why(&mut self, why: String) {
         self.why = why;
