@@ -1,12 +1,18 @@
 # awq
 
-This is an example of a `README.md` file that clearly explains how to use the `awq` system for various programming languages (`Rust`, `JavaScript`, `C`, `CMake`). It outlines the prerequisites such as the `Makefile`, scripts in `package.json`, or custom commands for `CMake`, as well as the need to create an `awq.yml` file:
+This is an example of a `README.md` file that clearly explains how to use the `awq` system for various programming
+languages (`Rust`, `JavaScript`, `C`, `CMake`). It outlines the prerequisites such as the `Makefile`, scripts in
+`package.json`, or custom commands for `CMake`, as well as the need to create an `awq.yml` file:
 
-This project provides a unified abstraction for running build, test, lint, formatting, and audit commands across different programming languages using a common configuration system.
+This project provides a unified abstraction for running build, test, lint, formatting, and audit commands across
+different programming languages using a common configuration system.
 
 ## Concept
 
-Each language is associated with a set of standardized commands grouped into a `RUN_XXX` table. These commands can then be executed using the `awq` tool.
+
+
+Each language is associated with a set of standardized commands grouped into a `RUN_XXX` table. These commands can then
+be executed using the `awq` tool.
 
 ## Minimum Configuration Requirements
 
@@ -21,11 +27,11 @@ No special configuration is required. The commands are directly compatible with 
 
 ```json
 "scripts": {
-  "build": "tsc",
-  "fmt": "prettier --check .",
-  "lint": "eslint .",
-  "audit": "npm audit",
-  "test": "npm test"
+"build": "tsc",
+"fmt": "prettier --check .",
+"lint": "eslint .",
+"audit": "npm audit",
+"test": "npm test"
 }
 ```
 
@@ -43,10 +49,10 @@ make test    # for testing
 ### CMake
 
 - Requires a custom configuration based on shell commands:
-  - `cmake -S . -B build` for configuration
-  - `cmake --build build` for compilation
-  - `ctest --test-dir build` for testing
-  - `clang-format` and `cppcheck` for formatting and linting
+    - `cmake -S . -B build` for configuration
+    - `cmake --build build` for compilation
+    - `ctest --test-dir build` for testing
+    - `clang-format` and `cppcheck` for formatting and linting
 
 It is recommended to have a well-structured `CMakeLists.txt` file.
 
