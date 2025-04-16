@@ -1,20 +1,29 @@
-use commit::AwqCommit;
-use std::process::exit;
-pub mod ask;
-pub mod commit;
-pub mod run;
-fn main() {
-    match AwqCommit::new() {
-        Ok(mut app) => {
-            if let Err(e) = app.save() {
-                eprintln!("{e}");
-                exit(1)
+use crate::widgets::awq::base::Component;
+use crate::widgets::search::SearchInput;
+use crossterm::event::{self, Event};
+use ratatui::{init, restore};
+use std::time::Duration;
+
+pub mod widgets;
+
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let mut terminal = init();
+
+    // Main loop
+    let mut search = SearchInput::new();
+    loop {
+        search.mount(&mut terminal).await;
+
+        if event::poll(Duration::from_millis(200))? {
+            if let Event::Key(key) = event::read()? {
+                search.handle(key.code).await;
+                if key.code.is_esc() {
+                    break;
+                }
             }
-            exit(0)
-        }
-        Err(e) => {
-            eprintln!("{e}");
-            exit(1)
         }
     }
+    restore();
+    Ok(())
 }

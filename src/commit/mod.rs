@@ -191,3 +191,15 @@ impl AwqCommit {
         self.summary = summary;
     }
 }
+
+pub fn commit() -> Result<(AwqCommit), Error> {
+    match AwqCommit::new() {
+        Ok(mut app) => {
+            if let Err(e) = app.save() {
+                return Err(e);
+            }
+            Ok(app)
+        }
+        Err(e) => Err(e),
+    }
+}
