@@ -1,18 +1,18 @@
 use crate::widgets::awq::base::Component;
+use crate::widgets::search_result::SearchResult;
 use crossterm::event::KeyCode;
 use ratatui::buffer::Buffer;
 use ratatui::layout::{Constraint, Direction, Layout, Margin, Rect};
 use ratatui::style::{Color, Modifier, Style};
 use ratatui::widgets::{Block, Borders, Widget};
 use ratatui::DefaultTerminal;
-use reqwest::{get, Error, Response, Url};
-use std::future::Future;
 
 #[derive(Clone)]
 pub struct SearchInput {
     label: String,
     value: String,
     is_active: bool,
+    result: SearchResult,
 }
 
 impl Widget for SearchInput {
@@ -53,16 +53,17 @@ impl Component for SearchInput {
             label: String::from(" Kōgnitara "),
             value: String::new(),
             is_active: false,
+            result: SearchResult::new(),
         }
     }
 
-    async fn update(&mut self, new: Self) {
+    fn update(&mut self, new: Self) {
         self.label = new.label;
         self.value = new.value;
         self.is_active = new.is_active;
     }
 
-    async fn mount(&mut self, t: &mut DefaultTerminal) {
+    fn mount(&mut self, t: &mut DefaultTerminal) {
         assert!(t
             .draw(|frame| {
                 let size = frame.area();
@@ -72,44 +73,31 @@ impl Component for SearchInput {
                     .constraints([Constraint::Length(3), Constraint::Min(0)].as_ref())
                     .split(size);
                 frame.render_widget(self.clone(), chunks[0]);
+                frame.render_widget(self.result.clone(), chunks[1]);
             })
             .is_ok());
     }
 
-    async fn handle(&mut self, key_code: KeyCode) {
+    fn handle(&mut self, key_code: KeyCode) {
         match key_code {
             KeyCode::Enter => {
                 if self.is_active {
-                    let url = format!(
-                        "http://127.0.0.1:4213/breathes/search/{}",
-                        self.value.replace(" ", "-").replace("_", "-")
-                    );
-
-                    let res = self
-                        .get(Url::parse(url.as_str()).expect("invalid url"))
-                        .await
-                        .expect("no response");
-                    println!("{res:?}");
                     self.value.clear();
                     self.is_active = false;
+                    self.result.active = true;
                 }
             }
             KeyCode::Char('/') => {
                 self.is_active = !self.is_active;
+                self.result.active = !self.is_active;
             }
             KeyCode::Char(c) if self.is_active => {
                 self.value.push(c);
-                self.update(self.clone()).await;
             }
             KeyCode::Backspace if self.is_active => {
                 self.value.pop();
-                self.update(self.clone()).await;
             }
             _ => {}
         }
-    }
-
-    fn get(&mut self, url: Url) -> impl Future<Output = Result<Response, Error>> + Send {
-        get(url.clone())
     }
 }
