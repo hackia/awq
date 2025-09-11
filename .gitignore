@@ -1,0 +1,120 @@
+# Compilés C/C++
+*.o
+*.obj
+*.lo
+*.la
+*.a
+*.lib
+*.dll
+*.so
+*.so.*
+*.dylib
+*.exe
+*.out
+*.app
+*.i*
+*.pdb
+*.ipdb
+*.idb
+*.d
+
+# CMake
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+CTestTestfile.cmake
+CMakeUserPresets.json
+CMakeScripts/
+compile_commands.json
+install_manifest.txt
+Testing/
+_deps/
+CMakePresets.json.user
+# Dossiers de build CMake (CLion, presets, etc.)
+cmake-build-*/
+build*/
+build-*/
+out*/
+bin/
+obj/
+
+# Make / Ninja
+Makefile
+*.make
+.ninja_deps
+.ninja_log
+
+# Meson (si utilisé)
+meson-logs/
+meson-info/
+meson-private/
+subprojects/*/packagecache/
+subprojects/*/.rotate
+
+# Couverture et profils
+*.gcno
+*.gcda
+*.gcov
+lcov.info
+profraw/
+*.profraw
+*.profdata
+
+# Logs et temporaires
+*.log
+*.tmp
+*.temp
+*.swp
+*.swo
+*.swp~
+*.bak
+*.orig
+
+# OS spécifiques
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# IDE / Éditeurs
+# JetBrains/CLion
+.idea/
+# (si vous souhaitez garder certains fichiers IDE, affinez la section .idea/)
+# VSCode
+.vscode/
+.history/
+.code-workspace
+# Visual Studio
+.vs/
+# Others
+*.kate-swp
+
+# Outils/paquets
+.cache/
+dist/
+node_modules/
+
+# Tests/fixtures temporaires
+.tmp/
+.temp/
+coverage/
+
+# Vcpkg / Conan / vcpkg artifacts
+vcpkg_installed/
+.conan/
+*.vcxproj*
+*.sln
+
+# Git
+*.patch
+*.rej
+
+# Env / secrets (si présents)
+.env
+.env.*
+CPackSourceConfig.cmake
+CPackConfig.cmake
+awq
