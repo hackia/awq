@@ -22,3 +22,6 @@ target_link_libraries(awq PRIVATE ftxui::screen ftxui::dom ftxui::component)
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     target_compile_definitions(awq PRIVATE FTXUI_MICROSOFT_TERMINAL_FLICKER_WORKAROUND)
 endif()
+
+install(TARGETS awq DESTINATION bin)
+
